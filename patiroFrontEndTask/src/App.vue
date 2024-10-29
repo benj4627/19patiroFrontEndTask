@@ -95,7 +95,7 @@ function saveChanges() {
               {{ getStatusLabel(patient.status).label }}
             </td>
             <td>
-              <button @click="fetchPatientDetails(patient.id)">Detaljer</button>
+              <button class="detailsButton" @click="fetchPatientDetails(patient.id)">Detaljer</button>
             </td>
           </tr>
         </tbody>
@@ -112,8 +112,8 @@ function saveChanges() {
             <p><span class="bold">Højde:</span> {{ selectedPatientDetails.height }} cm</p>
             <p><span class="bold">Adresse:</span> {{ selectedPatientDetails.address }}</p>
             <p><span class="bold">Telefonnummer:</span> {{ selectedPatientDetails.phoneNumber }}</p>
-            <button @click="enterEditMode" class="editButton">Rediger</button>
-            <button @click="closeDetails" class="closeButton">Luk</button>
+            <button @click="enterEditMode" class="detailsButton">Rediger</button>
+            <button @click="closeDetails" class="cancelBtn">Luk</button>
           </div>
 
           <!-- Hvis redigeringstilstand er aktiv, vis formularer til at redigere patientens information -->
@@ -148,8 +148,8 @@ function saveChanges() {
                 <option value="3">Qualified</option>
               </select>
             </div>
-            <button @click="saveChanges">Gem</button>
-            <button @click="closeDetails">Annuller</button>
+            <button @click="saveChanges" class="editButton">Gem</button>
+            <button @click="closeDetails" class="cancelBtn">Annuller</button>
           </div>
         </div>
       </transition>
@@ -213,7 +213,7 @@ button {
 .detailsButton:hover {
   color: #479bef;
   border: 2.5px solid #479bef;
-  background-color:  rgb(255, 237, 237);
+  background-color: inherit;
 }
 
 .editButton {
@@ -224,7 +224,7 @@ button {
 .editButton:hover {
   color: #73b38b;
   border: 2.5px solid #73b38b;
-  background-color:  rgb(255, 237, 237);
+  background-color:  inherit;
 }
 
 .closeButton {
@@ -234,13 +234,13 @@ button {
 .closeButton:hover {
   color: #479bef;
   border: 2.5px solid #479bef;
-  background-color:  rgb(255, 237, 237);
+  background-color:  inherit;
 }
 
 .submitBtn:hover {
   color: #479bef;
   border: 2.5px solid #479bef;
-  background-color:  rgb(255, 237, 237);
+  background-color: inherit;
 }
 
 .cancelBtn {
@@ -251,7 +251,7 @@ button {
 .cancelBtn:hover {
   color: #fb7474;
   border: 2.5px solid #fb7474;
-  background-color:  rgb(255, 237, 237);
+  background-color: inherit;
 }
 
 
