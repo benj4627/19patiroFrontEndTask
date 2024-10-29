@@ -2,38 +2,40 @@
 //imports
 import { ref, onMounted } from 'vue';
 
-//async await fetch funktioner til at hente patient data og specifik patient data
+//variabler
 let patients = ref([]);
 let apiUrl = "https://patiro-developer.azurewebsites.net/api/Member";
-let selectedPatientDetails = ref(null); 
+let selectedPatientDetails = ref(null);
+let editMode = ref(false); // Tjekker om redigeringstilstand er aktiv
 
+//funktioner
+//async await fetch funktion til at hente patientinformationer
 async function fetchData() {
   try {
     const res = await fetch(apiUrl);
     let patientData = await res.json();
-    console.log(patientData);
     patients.value = patientData;
   } catch (error) {
     console.log('Der er sket fejl', error);
   }
 }
 
+//asyns await funktion til at hente specfikke patientdata
 async function fetchPatientDetails(id) {
   try {
     const res = await fetch(`https://patiro-developer.azurewebsites.net/api/Member/${id}`);
     let specificPatientData = await res.json();
-    console.log(specificPatientData);
     selectedPatientDetails.value = specificPatientData;
   } catch (error) {
     console.log('Der er sket fejl ved hentning af patientoplysninger:', error);
   }
 }
 
-  onMounted(() => {
-      fetchData();
-    });
+onMounted(() => {
+  fetchData();
+});
 
-//funktion til at vise label status
+//funktion til at styre status. switch statement til at vise tekst i stedet for status tal
 function getStatusLabel(status) {
   switch (status) {
     case 0: 
@@ -49,49 +51,111 @@ function getStatusLabel(status) {
   }
 }
 
+//funktion til at lukke "detaljer"
+function closeDetails() {
+  selectedPatientDetails.value = null;
+  editMode.value = false;
+}
 
+//funktion til at åbne redigeringstilstand
+function enterEditMode() {
+  editMode.value = true;
+}
+
+//funktion til at gemme ændringer i redigeringstilstand
+function saveChanges() {
+  /// Finder indekset for den patient i listen, hvis ID matcher det valgte patients (p) ID
+  const index = patients.value.findIndex(p => p.id === selectedPatientDetails.value.id);
+ //Erstatter eksisterende patient med opdaterede oplysninger fra selectedPatientDetails
+  patients.value[index] = selectedPatientDetails.value;
+  closeDetails();
+}
 </script>
+
 
 <template>
   <body>
-    <div class="backgroundDiv">
-      <div class="tableContainer">
-        <table class="table">
-          <thead class="tableHeadContent">
-            <tr>
-              <th class="patientIDTitle">ID</th>
-              <th class="patientNameTitle">Navn</th>
-              <th class="patientStatusTitle">Status</th>
-              <th class="patientActionTitle">Handlinger</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="patient in patients" :key="patient.id">
-              <td class="patientID">{{ patient.id }}</td>
-              <td class="patientName">{{ patient.name }}</td>
-              <td :class="getStatusLabel(patient.status).class"> <div class="statusContainer">
-                {{ getStatusLabel(patient.status).label }}</div>
-              </td>
-              <td class="patientAction">
-                <button class="detailsButton" @click="fetchPatientDetails(patient.id)">Detaljer</button>
-                <button class="editButton" @click="editPatient(patient.id)">Rediger</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+  <div class="backgroundDiv">
+    <div class="tableContainer">
+      <table class="table">
+        <thead class="tableHeadContent">
+          <tr>
+            <th>ID</th>
+            <th>Navn</th>
+            <th>Status</th>
+            <th>Handlinger</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Loop gennem listen af patienter. Generer en tabelrække for hver patient med deres informationer -->
+          <tr v-for="patient in patients" :key="patient.id">
+            <td>{{ patient.id }}</td>
+            <td>{{ patient.name }}</td>
+            <td :class="getStatusLabel(patient.status).class">
+              {{ getStatusLabel(patient.status).label }}
+            </td>
+            <td>
+              <button @click="fetchPatientDetails(patient.id)">Detaljer</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
 
+      <transition name="fade">
+         <!-- Vis detaljer for den valgte patient -->
         <div v-if="selectedPatientDetails" class="specificPatientDetails">
           <h2>Detaljer for {{ selectedPatientDetails.name }}</h2>
-          <p><span class="bold">Vægt:</span> {{ selectedPatientDetails.weight }} kg</p>
-          <p><span class="bold">Højde:</span> {{ selectedPatientDetails.height }} cm</p>
-          <p><span class="bold">Adresse:</span> {{ selectedPatientDetails.address }}</p>
-          <p><span class="bold">Telefonnummer:</span>{{ selectedPatientDetails.phoneNumber }}</p>
-          <button class="closeButton">Luk Vindue</button>
-        </div>
 
-      </div>
+          <!-- Hvis vi ikke er i redigeringstilstand, vis patientens detaljer -->
+          <div v-if="!editMode">
+            <p><span class="bold">Vægt:</span> {{ selectedPatientDetails.weight }} kg</p>
+            <p><span class="bold">Højde:</span> {{ selectedPatientDetails.height }} cm</p>
+            <p><span class="bold">Adresse:</span> {{ selectedPatientDetails.address }}</p>
+            <p><span class="bold">Telefonnummer:</span> {{ selectedPatientDetails.phoneNumber }}</p>
+            <button @click="enterEditMode" class="editButton">Rediger</button>
+            <button @click="closeDetails" class="closeButton">Luk</button>
+          </div>
+
+          <!-- Hvis redigeringstilstand er aktiv, vis formularer til at redigere patientens information -->
+          <div v-else class="editMode">
+            <div>
+               <!-- Binder input-feltet til patientens informationer, så ændringer opdaterer selectedPatientDetails.xxxx -->
+              <label><span class="bold">Navn:</span></label>
+              <input v-model="selectedPatientDetails.name" />
+            </div>
+            <div>
+              <label><span class="bold">Vægt:</span></label>
+              <input v-model.number="selectedPatientDetails.weight" />
+            </div>
+            <div>
+              <label><span class="bold">Højde:</span></label>
+              <input v-model.number="selectedPatientDetails.height" />
+            </div>
+            <div>
+              <label><span class="bold">Adresse:</span></label>
+              <input v-model="selectedPatientDetails.address" />
+            </div>
+            <div>
+              <label><span class="bold">Telefonnummer:</span></label>
+              <input v-model="selectedPatientDetails.phoneNumber" />
+            </div>
+            <div>
+              <label><span class="bold">Status:</span></label>
+              <select v-model="selectedPatientDetails.status">
+                <option value="0">New</option>
+                <option value="1">Pending</option>
+                <option value="2">Disqualified</option>
+                <option value="3">Qualified</option>
+              </select>
+            </div>
+            <button @click="saveChanges">Gem</button>
+            <button @click="closeDetails">Annuller</button>
+          </div>
+        </div>
+      </transition>
     </div>
-  </body>
+  </div>
+</body>
 </template>
 
 
@@ -173,6 +237,24 @@ button {
   background-color:  rgb(255, 237, 237);
 }
 
+.submitBtn:hover {
+  color: #479bef;
+  border: 2.5px solid #479bef;
+  background-color:  rgb(255, 237, 237);
+}
+
+.cancelBtn {
+  background-color: #fb7474;
+  border: 2.5px solid  #fb7474;
+}
+
+.cancelBtn:hover {
+  color: #fb7474;
+  border: 2.5px solid #fb7474;
+  background-color:  rgb(255, 237, 237);
+}
+
+
 .patientName {
   font-weight: bold;
   letter-spacing: .05rem;
@@ -222,10 +304,6 @@ button {
   transform: translate(-50%, -50%); 
   padding: 2rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.265);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center
 }
 
 .specificPatientDetails h2 {
@@ -237,4 +315,66 @@ button {
   font-weight: bold;
 }
 
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.7s;
+}
+.fade-enter, .fade-leave-to {
+  opacity: 0;
+}
+
+.editPatientDetails {
+  background: linear-gradient(to bottom, #dcdcf7, #f6fada);
+  z-index: 2;
+  border-radius: 20px;
+  position: fixed; 
+  top: 50%;
+  left: 50%; 
+  transform: translate(-50%, -50%); 
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.265);
+}
+
+
+.editPatientDetails h2 {
+  font-weight: bold;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-size: 1.5rem;
+}
+
+.editPatientDetails form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .5rem;
+}
+
+.editPatientDetails label {
+  margin-top: 0.5rem;
+  font-weight: bold;
+}
+
+.editPatientDetails input {
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  border: 1px solid #d4d4d4;
+  border-radius: 5px;
+  margin-left: .5rem;
+}
+
+.editMode input {
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  border: 1px solid #d4d4d4;
+  border-radius: 5px;
+  margin-left: .5rem;
+}
+
+.editMode select {
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  border: 1px solid #d4d4d4;
+  border-radius: 5px;
+  margin-left: .5rem;
+}
 </style>
