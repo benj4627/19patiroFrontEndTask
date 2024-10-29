@@ -2,20 +2,33 @@
 //imports
 import { ref, onMounted } from 'vue';
 
-//async await fetch funktion
-let patients = ref([])
-let apiUrl = "https://patiro-developer.azurewebsites.net/api/Member"
+//async await fetch funktioner til at hente patient data og specifik patient data
+let patients = ref([]);
+let apiUrl = "https://patiro-developer.azurewebsites.net/api/Member";
+let selectedPatientDetails = ref(null); 
 
-  async function fetchData() {
-    try {
-      const res = await fetch(apiUrl)
-      let patientData = await res.json()
-      console.log(patientData)
-      patients.value = patientData;
-    } catch (error) {
-      console.log('Der er sket fejl', error)
-    }
+async function fetchData() {
+  try {
+    const res = await fetch(apiUrl);
+    let patientData = await res.json();
+    console.log(patientData);
+    patients.value = patientData;
+  } catch (error) {
+    console.log('Der er sket fejl', error);
   }
+}
+
+async function fetchPatientDetails(id) {
+  try {
+    const res = await fetch(`https://patiro-developer.azurewebsites.net/api/Member/${id}`);
+    let specificPatientData = await res.json();
+    console.log(specificPatientData);
+    selectedPatientDetails.value = specificPatientData;
+  } catch (error) {
+    console.log('Der er sket fejl ved hentning af patientoplysninger:', error);
+  }
+}
+
   onMounted(() => {
       fetchData();
     });
@@ -60,12 +73,22 @@ function getStatusLabel(status) {
                 {{ getStatusLabel(patient.status).label }}</div>
               </td>
               <td class="patientAction">
-                <button class="detailsButton" @click="viewDetails(patient.id)">Detaljer</button>
+                <button class="detailsButton" @click="fetchPatientDetails(patient.id)">Detaljer</button>
                 <button class="editButton" @click="editPatient(patient.id)">Rediger</button>
               </td>
             </tr>
           </tbody>
         </table>
+
+        <div v-if="selectedPatientDetails" class="specificPatientDetails">
+          <h2>Detaljer for {{ selectedPatientDetails.name }}</h2>
+          <p><span class="bold">Vægt:</span> {{ selectedPatientDetails.weight }} kg</p>
+          <p><span class="bold">Højde:</span> {{ selectedPatientDetails.height }} cm</p>
+          <p><span class="bold">Adresse:</span> {{ selectedPatientDetails.address }}</p>
+          <p><span class="bold">Telefonnummer:</span>{{ selectedPatientDetails.phoneNumber }}</p>
+          <button class="closeButton">Luk Vindue</button>
+        </div>
+
       </div>
     </div>
   </body>
@@ -101,7 +124,6 @@ th, td {
 
 tr {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.126);
-
 }
 
 th {
@@ -141,6 +163,16 @@ button {
   background-color:  rgb(255, 237, 237);
 }
 
+.closeButton {
+  margin: unset;
+}
+
+.closeButton:hover {
+  color: #479bef;
+  border: 2.5px solid #479bef;
+  background-color:  rgb(255, 237, 237);
+}
+
 .patientName {
   font-weight: bold;
   letter-spacing: .05rem;
@@ -157,33 +189,52 @@ button {
   padding: 1rem 1.5rem;
   margin-top: 1rem;
   font-weight: bold;
+  border-radius: 100px;
 }
 
 .statusNew {
   color: rgb(255, 255, 255);
   background-color: rgba(84, 166, 242, 0.711); 
-  font-weight: bold;
-  border-radius: 20px;
 }
 
 .statusPending {
   color: #7a5c03; 
   background-color: rgba(255, 255, 0, 0.3); 
-  font-weight: bold;
-  border-radius: 20px;
 }
 
 .statusDisqualified {
   color: #721c24; 
   background-color: rgba(255, 0, 0, 0.2); 
-  font-weight: bold;
-  border-radius: 20px;
 }
 
 .statusQualified {
   color: #155724; 
   background-color: rgba(106, 187, 106, 0.3);
-  font-weight: bold;
-  border-radius: 20px;
 }
+
+.specificPatientDetails {
+  background: linear-gradient(to bottom, #dcdcf7, #f6fada);
+  z-index: 2;
+  border-radius: 20px;
+  position: fixed; 
+  top: 50%;
+  left: 50%; 
+  transform: translate(-50%, -50%); 
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.265);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center
+}
+
+.specificPatientDetails h2 {
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.bold {
+  font-weight: bold;
+}
+
 </style>
