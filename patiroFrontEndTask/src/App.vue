@@ -141,7 +141,7 @@ function saveChanges() {
             </div>
             <div>
               <label><span class="bold">Status:</span></label>
-              <select v-model="selectedPatientDetails.status">
+              <select v-model.number="selectedPatientDetails.status">
                 <option value="0">New</option>
                 <option value="1">Pending</option>
                 <option value="2">Disqualified</option>
